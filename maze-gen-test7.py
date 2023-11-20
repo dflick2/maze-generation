@@ -9,10 +9,10 @@ gsize = 3
 spacing = 25 # cell box width
 factor = 1 # change this to two for a fun time!
 lw = 3 # line width
-redc = (220,0,50)
+basic_red = (220,0,50)
 dark_red = (150,0,0)
 clock = pygame.time.Clock()
-font = pygame.font.SysFont('arial',14)
+#font = pygame.font.SysFont('arial',14)
 
 class Graphy:
     def __init__(self,gsize):
@@ -37,6 +37,7 @@ class Graphy:
         self.starttimme = timer()
         self.endtime = timer()
         self.time_elapsed = 0
+        self.revealed = []
 
     def has_unvisited_neighbors(self,cell):
         """has_unvisited_neighbors: checks input cell for any unvisited neighbors"""
@@ -145,6 +146,7 @@ class Graphy:
     def draw_top_hallway(self,cell):
         """ recursively draws top hallway """
         self.draw_cell(cell)
+        self.revealed.append(cell)
         if self.walls[cell][0] == 0:
             self.draw_top_hallway(cell-self.gsize)
             pass
@@ -152,6 +154,7 @@ class Graphy:
     def draw_right_hallway(self,cell):
         """ recursively draws right hallway """
         self.draw_cell(cell)
+        self.revealed.append(cell)
         if self.walls[cell][1] == 0:
             self.draw_right_hallway(cell+1)
             pass
@@ -159,6 +162,7 @@ class Graphy:
     def draw_bottom_hallway(self,cell):
         """ recursively draws bottom hallway """
         self.draw_cell(cell)
+        self.revealed.append(cell)
         if self.walls[cell][2] == 0:
             self.draw_bottom_hallway(cell+self.gsize)
             pass
@@ -166,28 +170,17 @@ class Graphy:
     def draw_left_hallway(self,cell):
         """ recursively draws left hallway """
         self.draw_cell(cell)
+        self.revealed.append(cell)
+        g1.visited[cell]=1
         if self.walls[cell][3] == 0:
             self.draw_left_hallway(cell-1)
             pass
+    
+    def draw_visited(self):
+        """Draws the walls for every cell we have visited."""
+        pass
 
-
-    def __str__(self):
-        """ pretty print function """
-        sqrd = self.gsize**2
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        if 1 == 1:
-            for i in range(self.gsize):
-                for j in range(self.gsize):
-                    print(f"{self.cells[i][j]:5}",end='')
-                print()
-        if 1==0:
-            for i,j in self.available.items():
-                print(f"{i:3},{j:13},{str(self.visited[i]):20}")
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        return ''
-
-
-loop_size = 10
+loop_size = 12
 
 pygame.init()
 screen = pygame.display.set_mode((500,500))
@@ -200,17 +193,16 @@ osx = int(xst)
 osy = int(yst)
 xy_index = g1.cells[loop_size-1][loop_size-1]
 mpath = [loop_size**2]
-thek = 0
-reachedend = False
+show_maze = 0
+visited = []
 
-timer_start = timer()
-timer_end = 0
-time_elapsed = 0
+for keyt,valt in g1.visited.items():
+    #print(keyt,valt)
+    pass
 
 while running:
     pygame.display.flip()
     event = pygame.event.wait()
-    #for event in pygame.event.get():
     if event.type == pygame.QUIT:
         running = False
     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -221,76 +213,75 @@ while running:
         osx = int(xst)
         osy = int(yst)
         xy_index = g1.cells[loop_size-1][loop_size-1]
-        pygame.draw.rect(screen,redc,(xst,yst,15,15))
+        pygame.draw.rect(screen,basic_red,(xst,yst,15,15))
         mpath =[loop_size**2-1]
-        reachedend = False
         time_start = timer()
-        #print(g1)
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_SPACE:
-            if thek == 1:
-                thek = 0
+            if show_maze == 1:
+                show_maze = 0
             else:
-                thek = 1
-            print(thek)
-        if event.key == pygame.K_UP:
+                show_maze = 1
+        if event.key == pygame.K_UP or event.key == pygame.K_w:
             if g1.walls[g1.get_cell(osx,osy)][0] == 0:
                 osy -= spacing
                 xy_index = xy_index - loop_size
-        if event.key == pygame.K_DOWN:
+        if event.key == pygame.K_DOWN or event.key == pygame.K_s:
             if g1.walls[g1.get_cell(osx,osy)][2] == 0:
                 osy += spacing
                 xy_index = xy_index + loop_size
-        if event.key == pygame.K_LEFT:
+        if event.key == pygame.K_LEFT or event.key == pygame.K_a:
             if g1.walls[g1.get_cell(osx,osy)][3] == 0:
                 osx -= spacing
                 xy_index = xy_index - 1
-        if event.key == pygame.K_RIGHT:
+        if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
             if g1.walls[g1.get_cell(osx,osy)][1] == 0:
                 osx += spacing
                 xy_index = xy_index + 1
-        #print(xy_index)
-        screen.fill(black)
-        pygame.draw.rect(screen,dark_red,(osx,osy,15,15))
+
+    screen.fill(black)
+    """
+    for i in visited: #g1.revealed:
+        pygame.draw.rect(screen,dark_red,(i[0]+6,i[1]+6,5,5))
+        #g1.draw_cell(i[2])
+    """
+
+    for i in g1.revealed:
+        #xcdraw,ycdraw = g1.get_coords(i)
+        #pygame.draw.rect(screen,dark_red,(xcdraw+6,ycdraw+6,5,5))
+        g1.draw_cell(i)
+
+    pygame.draw.rect(screen,basic_red,(osx,osy,15,15))
+
+    
+    if xy_index == 0:
+        break
     
     # draws all of  the  dots in place
     for i in range(spacing,g1.gsize*spacing+2*spacing,spacing):
         for j in range(spacing,g1.gsize*spacing+2*spacing,spacing):
             pygame.draw.rect(screen,GREY,(i,j,2,2))
-    if xy_index == 0:
-        reachedend = True
     
-    #draw the surrounding cells
-    g1.draw_cell(xy_index)
+    #draw every cell we have visited
+    #visited.append(xy_index)
+    visited.append((osx,osy,xy_index))
+
+    #draw the surrounding cells and entire maze if space has been pressed
     g1.draw_hallway(xy_index)
-    if thek == 1:
+    
+    if show_maze == 1:
         g1.draw_walls()
-    if reachedend == True:
-        g1.draw_walls()
-        timer_end = timer()
-        time_elapsed = timer_end-timer_start
-        print(time_elapsed)
-    #pygame.display.update()
-    #break
+    
+    #Display the current time
+    #fontt = pygame.font.SysFont('arialblack',40)
+    #img = fontt.render(f"time: {timer():4}",True,(basic_red))
+    #screen.blit(img,(30,300))
 
-    text = font.render(f"time_elapsed: {time_elapsed.__round__(1):4}",False,BLUE)
-    screen.blit(text,(10,10))
     clock.tick(30)
-
+    
 pygame.quit()
 
-
-end_time = timer()
-time_dif = end_time - start_time
+time_dif = timer() - start_time
 print(round(time_dif,2))
 
-
-'''
-image manipulation
-full stack web app with docker
-full oauth2 spec server - OIDC compliant - using JSON web tokens
-sudoku solver
-pulling online data - apache airflow - save to a data store - extract,transform,load,analysis
-'''
-
-
+"""TURN ON MEMORY VISION (DISPLAY EVERY CELL WE HAVE BEEN TO)"""
